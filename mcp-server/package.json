@@ -1,16 +1,22 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "mcp-server",
-  "module": "src/index.ts",
+  "name": "@surf-mcp/mcp",
+  "exports": {
+    "./test": "./src/test.ts"
+  },
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run src/index.ts --watch"
+    "dev": "bun --watch src/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "zod": "3"
   }
 }

@@ -6,6 +6,11 @@ export default defineConfig({
   manifest: {
     permissions: ["storage", "tabs", "tabCapture", "activeTab", "nativeMessaging"],
   },
+  dev: {
+    server: {
+      port: 5173
+    }
+  },
   vite: () => ({
     plugins: [tailwindPlugin()],
   }),
