@@ -1,7 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import z from "zod";
-import { wsServer } from "./ws";
 
 export const mcpServer = new McpServer({
   name: "surf-mcp",
@@ -14,10 +13,6 @@ mcpServer.tool(
   "Open a new tab",
   { url: z.string() },
   async ({ url }) => {
-    wsServer.publish(
-      "open-tab",
-      JSON.stringify({ type: "open-tab", data: { url } }),
-    );
 
     return { content: [{ type: "text", text: `Opening ${url}` }] };
   },

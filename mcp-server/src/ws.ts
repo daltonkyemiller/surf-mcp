@@ -1,4 +1,3 @@
-
 export const wsServer = Bun.serve({
   port: 3000,
   fetch: (req, server) => {
@@ -9,15 +8,7 @@ export const wsServer = Bun.serve({
     return new Response("Hello World!");
   },
   websocket: {
-    open(ws) {
-      ws.subscribe("open-tab");
-    },
-    message: (ws, msg) => {
-      console.log("got message", msg);
-      if (msg === "ping") {
-        ws.send("pong");
-        return;
-      }
-    },
+    open(ws) {},
+    message(ws, msg) {},
   },
 });
