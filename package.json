@@ -3,6 +3,7 @@
   "name": "surf-mcp",
   "workspaces": [
     "extension",
-    "mcp-server"
+    "mcp-server",
+    "shared"
   ]
 }

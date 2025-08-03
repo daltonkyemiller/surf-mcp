@@ -7,7 +7,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --watch src/index.ts"
+    "dev": "bun --watch src/index.ts",
+    "logs:debug": "tail -f ./logs/debug.log",
+    "logs:error": "tail -f ./logs/error.log"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -17,6 +19,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.1",
+    "@surf-mcp/shared": "workspace:*",
+    "winston": "^3.17.0",
     "zod": "3"
   }
 }

@@ -1,22 +1,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import z from "zod";
+import { ToolRegistry } from "../tool-registry";
+import { openTabTool } from "../tools/open-tab";
 
 export const mcpServer = new McpServer({
   name: "surf-mcp",
   version: "1.0.0",
 });
 
-// Add an addition tool
-mcpServer.tool(
-  "open-tab",
-  "Open a new tab",
-  { url: z.string() },
-  async ({ url }) => {
+const toolRegistry = new ToolRegistry(mcpServer);
 
-    return { content: [{ type: "text", text: `Opening ${url}` }] };
-  },
-);
+toolRegistry.register(openTabTool);
+
+toolRegistry.registerAllWithServer();
 
 // Start receiving messages on stdin and sending messages on stdout
 const transport = new StdioServerTransport();
