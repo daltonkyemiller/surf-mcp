@@ -1,29 +1,33 @@
 import z from "zod";
 import { ToolRegistry } from "../tool-registry";
 import { createMCPRequestSender } from "../request-handler";
-import { openTabProtocol } from "@surf-mcp/shared/protocols/browser";
+import { getTabsProtocol } from "@surf-mcp/shared/protocols/browser";
 import { isOk } from "@surf-mcp/shared/result";
 
-export const openTabTool = ToolRegistry.createToolDefinition({
-  name: "open-tab",
-  description: "Open a new tab in the browser",
-  schema: { url: z.string().url(), active: z.boolean().optional() },
-  handler: async ({ url, active }, extra) => {
+export const getTabsTool = ToolRegistry.createToolDefinition({
+  name: "get-tabs",
+  description: "Get the list of all open tabs",
+  schema: {},
+  handler: async ({}, extra) => {
     const requestSender = createMCPRequestSender();
 
     const result = await requestSender.sendRequest(
-      openTabProtocol,
-      { url, active },
+      getTabsProtocol,
+      {},
       extra,
     );
 
     if (isOk(result)) {
       const response = result[0];
+      const tabsList = response.tabs
+        .map(tab => `${tab.active ? "* " : "  "}${tab.title} (ID: ${tab.tabId}, URL: ${tab.url})`)
+        .join("\n");
+      
       return {
         content: [
           {
             type: "text",
-            text: `Successfully opened tab with ID ${response.tabId} at ${url}`,
+            text: `Open tabs:\n${tabsList}`,
           },
         ],
       };
@@ -33,7 +37,7 @@ export const openTabTool = ToolRegistry.createToolDefinition({
         content: [
           {
             type: "text",
-            text: `Failed to open tab: ${error.message}`,
+            text: `Failed to get tabs: ${error.message}`,
           },
         ],
         isError: true,

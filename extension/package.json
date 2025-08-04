@@ -11,8 +11,8 @@
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
-    "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "typecheck": "bunx tsc --noEmit"
   },
   "dependencies": {
     "@surf-mcp/mcp": "workspace:*",

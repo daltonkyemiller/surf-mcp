@@ -4,7 +4,8 @@ import tailwindPlugin from "@tailwindcss/vite";
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   manifest: {
-    permissions: ["storage", "tabs", "tabCapture", "activeTab", "nativeMessaging"],
+    permissions: ["storage", "tabs", "tabCapture", "activeTab", "nativeMessaging", "scripting"],
+    host_permissions: ["<all_urls>"],
   },
   dev: {
     server: {

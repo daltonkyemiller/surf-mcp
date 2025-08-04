@@ -2,9 +2,15 @@
   "$schema": "https://json.schemastore.org/package.json",
   "private": true,
   "name": "@surf-mcp/shared",
+  "scripts": {
+    "typecheck": "bunx tsc --noEmit"
+  },
   "exports": {
     "./result": "./src/result.ts",
-    "./utils": "./src/utils.ts"
+    "./utils": "./src/utils.ts",
+    "./protocol": "./src/protocol.ts",
+    "./client": "./src/client.ts",
+    "./protocols/*": "./src/protocols/*.ts"
   },
   "type": "module",
   "devDependencies": {
