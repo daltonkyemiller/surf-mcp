@@ -6,6 +6,12 @@ import { closeTabTool } from "../tools/close-tab";
 import { getActiveTabTool } from "../tools/get-active-tab";
 import { getTabsTool } from "../tools/get-tabs";
 import { getTabContentTool } from "../tools/get-tab-content";
+import { clickElementTool } from "../tools/click-element";
+import { navigateToUrlTool } from "../tools/navigate-to-url";
+import { interactElementTool } from "../tools/interact-element";
+import { getPageElementsTool } from "../tools/get-page-elements";
+import { injectScriptTool } from "../tools/inject-script";
+import { editPageContentTool } from "../tools/edit-page-content";
 import { protocolRegistry } from "@surf-mcp/shared/protocol";
 import {
   openTabProtocol,
@@ -13,6 +19,12 @@ import {
   getActiveTabProtocol,
   getTabsProtocol,
   getTabContentProtocol,
+  clickElementProtocol,
+  navigateToUrlProtocol,
+  interactElementProtocol,
+  getPageElementsProtocol,
+  injectScriptProtocol,
+  editPageContentProtocol,
 } from "@surf-mcp/shared/protocols/browser";
 
 export const mcpServer = new McpServer({
@@ -26,6 +38,12 @@ protocolRegistry.register(closeTabProtocol);
 protocolRegistry.register(getActiveTabProtocol);
 protocolRegistry.register(getTabsProtocol);
 protocolRegistry.register(getTabContentProtocol);
+protocolRegistry.register(clickElementProtocol);
+protocolRegistry.register(navigateToUrlProtocol);
+protocolRegistry.register(interactElementProtocol);
+protocolRegistry.register(getPageElementsProtocol);
+protocolRegistry.register(injectScriptProtocol);
+protocolRegistry.register(editPageContentProtocol);
 
 const toolRegistry = new ToolRegistry(mcpServer);
 
@@ -34,6 +52,12 @@ toolRegistry.register(closeTabTool);
 toolRegistry.register(getActiveTabTool);
 toolRegistry.register(getTabsTool);
 toolRegistry.register(getTabContentTool);
+toolRegistry.register(clickElementTool);
+toolRegistry.register(navigateToUrlTool);
+toolRegistry.register(interactElementTool);
+toolRegistry.register(getPageElementsTool);
+toolRegistry.register(injectScriptTool);
+toolRegistry.register(editPageContentTool);
 
 toolRegistry.registerAllWithServer();
 
