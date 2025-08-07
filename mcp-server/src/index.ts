@@ -1,9 +1,6 @@
 import { mcpServer } from "./mcp/server";
 import { wsServer } from "./ws/server";
 
-// Start the WebSocket server
-wsServer.start(3000);
-
 process.on("SIGINT", () => {
   wsServer.stop();
   mcpServer.close();

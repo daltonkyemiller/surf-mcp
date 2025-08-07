@@ -1,4 +1,6 @@
 import z from "zod";
+import type { Result } from "./result";
+import { ok, err } from "./result";
 
 // Base message structure for WebSocket communication
 export const BaseMessageSchema = z.object({
@@ -37,11 +39,12 @@ export class ProtocolRegistry {
 
   register<TRequest, TResponse>(
     protocol: ProtocolDefinition<TRequest, TResponse>
-  ): void {
+  ): Result<void, Error> {
     if (this.protocols.has(protocol.type)) {
-      throw new Error(`Protocol type '${protocol.type}' is already registered`);
+      return err(new Error(`Protocol type '${protocol.type}' is already registered`));
     }
     this.protocols.set(protocol.type, protocol);
+    return ok(undefined);
   }
 
   get<TRequest, TResponse>(

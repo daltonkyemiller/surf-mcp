@@ -1,15 +1,16 @@
 import { ResponseMessageSchema } from "@surf-mcp/shared/protocol";
 import { safeJSONParse } from "@surf-mcp/shared/utils";
+import { z } from "zod";
 import log from "../logger";
 
+const port = Bun.env.WS_PORT ? Number.parseInt(Bun.env.WS_PORT) : 4321;
+
 export class WSServer {
-  private server: any;
+  private server: Bun.Server;
   private connections = new Set<any>();
   private responseHandlers = new Map<string, (payload: any) => void>();
 
-  constructor() {}
-
-  start(port: number = 3000): void {
+  constructor() {
     this.server = Bun.serve({
       port,
       fetch: (req, server) => {
@@ -49,8 +50,29 @@ export class WSServer {
     }
   }
 
-  private handleMessage(ws: any, data: string | Buffer): void {
-    const [parsed, parseError] = safeJSONParse(data);
+  private handleMessage(
+    ws: Bun.ServerWebSocket<unknown>,
+    data: string | Buffer,
+  ): void {
+    const message = data.toString();
+    
+    // Handle heartbeat ping/pong
+    if (message === 'ping') {
+      try {
+        ws.send('pong');
+        return;
+      } catch (error) {
+        log.error("Failed to send pong response:", error);
+        return;
+      }
+    }
+    
+    if (message === 'pong') {
+      // Client responding to our ping (if we ever implement server-initiated pings)
+      return;
+    }
+
+    const [parsed, parseError] = safeJSONParse(message);
     if (parseError) {
       log.error("Failed to parse WebSocket message:", parseError);
       return;
@@ -66,7 +88,9 @@ export class WSServer {
     log.debug("Received WebSocket message:", parsed);
   }
 
-  private handleResponse(response: any): void {
+  private handleResponse(
+    response: z.output<typeof ResponseMessageSchema>,
+  ): void {
     const handler = this.responseHandlers.get(response.requestId);
     if (!handler) {
       log.warn(

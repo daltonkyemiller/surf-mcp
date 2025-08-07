@@ -9,6 +9,8 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import z from "zod";
+import type { Result } from "@surf-mcp/shared/result";
+import { ok, err } from "@surf-mcp/shared/result";
 
 export type ToolDefinition<TSchema extends z.ZodRawShape = z.ZodRawShape> = {
   name: string;
@@ -29,11 +31,12 @@ export class ToolRegistry {
     this.server = server;
   }
 
-  register<TSchema extends z.ZodRawShape>(input: ToolDefinition<TSchema>) {
+  register<TSchema extends z.ZodRawShape>(input: ToolDefinition<TSchema>): Result<void, Error> {
     if (this.toolDefinitions.has(input.name)) {
-      throw new Error(`Tool with name ${input.name} already exists`);
+      return err(new Error(`Tool with name ${input.name} already exists`));
     }
     this.toolDefinitions.set(input.name, input);
+    return ok(undefined);
   }
 
   registerAllWithServer() {

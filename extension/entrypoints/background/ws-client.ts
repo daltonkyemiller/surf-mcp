@@ -25,76 +25,117 @@ import type {
   InjectScriptRequest,
   EditPageContentRequest,
 } from "@surf-mcp/shared/protocols/browser";
+import type { Result } from "@surf-mcp/shared/result";
+import { ok, err } from "@surf-mcp/shared/result";
 
 export class WSClient extends TypedClient {
-  constructor(url: string = "ws://localhost:3000") {
-    super({ url });
+  private currentPort: number;
+
+  constructor(port: number = 3000) {
+    super({ 
+      url: `ws://localhost:${port}`,
+      autoReconnect: true,
+      maxReconnectInterval: 5000,
+      heartbeatInterval: 15000
+    });
+    this.currentPort = port;
     this.setupHandlers();
+  }
+
+  // Result-based browser operations
+  private async openTabSafe(payload: OpenTabRequest): Promise<Result<{ tabId: number; success: boolean }, Error>> {
+    try {
+      const tab = await browser.tabs.create({
+        url: payload.url,
+        active: payload.active ?? true,
+      });
+
+      return ok({
+        tabId: tab.id!,
+        success: true,
+      });
+    } catch (error) {
+      console.error("Failed to open tab:", error);
+      return err(
+        new Error(
+          `Failed to open tab: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      );
+    }
+  }
+
+  private async closeTabSafe(payload: CloseTabRequest): Promise<Result<{ success: boolean }, Error>> {
+    try {
+      await browser.tabs.remove(payload.tabId);
+      return ok({ success: true });
+    } catch (error) {
+      console.error("Failed to close tab:", error);
+      return err(
+        new Error(
+          `Failed to close tab: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      );
+    }
+  }
+
+  private async getActiveTabSafe(payload: GetActiveTabRequest): Promise<Result<{ tabId: number; url: string; title: string }, Error>> {
+    try {
+      const [activeTab] = await browser.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      if (!activeTab) {
+        return err(new Error("No active tab found"));
+      }
+
+      return ok({
+        tabId: activeTab.id!,
+        url: activeTab.url || "",
+        title: activeTab.title || "",
+      });
+    } catch (error) {
+      console.error("Failed to get active tab:", error);
+      return err(
+        new Error(
+          `Failed to get active tab: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      );
+    }
   }
 
   private setupHandlers(): void {
     // Handle open-tab requests
-    this.on(openTabProtocol, async (payload: OpenTabRequest) => {
-      try {
-        const tab = await browser.tabs.create({
-          url: payload.url,
-          active: payload.active ?? true,
-        });
-
-        // Send response back through WebSocket
-        return {
-          tabId: tab.id!,
-          success: true,
-        };
-      } catch (error) {
-        console.error("Failed to open tab:", error);
-        throw new Error(
-          `Failed to open tab: ${error instanceof Error ? error.message : String(error)}`,
-        );
+    this.on(openTabProtocol, async (payload) => {
+      const result = await this.openTabSafe(payload);
+      if (result[0]) {
+        return result[0];
+      } else {
+        throw result[1];
       }
     });
 
     // Handle close-tab requests
-    this.on(closeTabProtocol, async (payload: CloseTabRequest) => {
-      try {
-        await browser.tabs.remove(payload.tabId);
-        return {
-          success: true,
-        };
-      } catch (error) {
-        console.error("Failed to close tab:", error);
-        throw new Error(
-          `Failed to close tab: ${error instanceof Error ? error.message : String(error)}`,
-        );
+    this.on(closeTabProtocol, async (payload) => {
+      const result = await this.closeTabSafe(payload);
+      if (result[0]) {
+        return result[0];
+      } else {
+        throw result[1];
       }
     });
 
     // Handle get-active-tab requests
-    this.on(getActiveTabProtocol, async (payload: GetActiveTabRequest) => {
-      try {
-        const [activeTab] = await browser.tabs.query({
-          active: true,
-          currentWindow: true,
-        });
-        if (!activeTab) {
-          throw new Error("No active tab found");
-        }
-
-        return {
-          tabId: activeTab.id!,
-          url: activeTab.url || "",
-          title: activeTab.title || "",
-        };
-      } catch (error) {
-        console.error("Failed to get active tab:", error);
-        throw new Error(
-          `Failed to get active tab: ${error instanceof Error ? error.message : String(error)}`,
-        );
+    this.on(getActiveTabProtocol, async (payload) => {
+      const result = await this.getActiveTabSafe(payload);
+      if (result[0]) {
+        return result[0];
+      } else {
+        throw result[1];
       }
     });
 
     // Handle get-tabs requests
-    this.on(getTabsProtocol, async (payload: GetTabsRequest) => {
+    this.on(getTabsProtocol, async (payload) => {
       try {
         const tabs = await browser.tabs.query({});
 
@@ -115,7 +156,7 @@ export class WSClient extends TypedClient {
     });
 
     // Handle get-tab-content requests
-    this.on(getTabContentProtocol, async (payload: GetTabContentRequest) => {
+    this.on(getTabContentProtocol, async (payload) => {
       try {
         // Execute content script to extract page content
         const results = await browser.scripting.executeScript({
@@ -139,7 +180,7 @@ export class WSClient extends TypedClient {
     });
 
     // Handle click-element requests
-    this.on(clickElementProtocol, async (payload: ClickElementRequest) => {
+    this.on(clickElementProtocol, async (payload) => {
       try {
         const results = await browser.scripting.executeScript({
           target: { tabId: payload.tabId },
@@ -162,7 +203,7 @@ export class WSClient extends TypedClient {
     });
 
     // Handle navigate-to-url requests
-    this.on(navigateToUrlProtocol, async (payload: NavigateToUrlRequest) => {
+    this.on(navigateToUrlProtocol, async (payload) => {
       try {
         const tab = await browser.tabs.get(payload.tabId);
         if (!tab) {
@@ -189,7 +230,7 @@ export class WSClient extends TypedClient {
     });
 
     // Handle interact-element requests
-    this.on(interactElementProtocol, async (payload: InteractElementRequest) => {
+    this.on(interactElementProtocol, async (payload) => {
       try {
         const results = await browser.scripting.executeScript({
           target: { tabId: payload.tabId },
@@ -212,7 +253,7 @@ export class WSClient extends TypedClient {
     });
 
     // Handle get-page-elements requests
-    this.on(getPageElementsProtocol, async (payload: GetPageElementsRequest) => {
+    this.on(getPageElementsProtocol, async (payload) => {
       try {
         const results = await browser.scripting.executeScript({
           target: { tabId: payload.tabId },
@@ -241,7 +282,7 @@ export class WSClient extends TypedClient {
     });
 
     // Handle inject-script requests
-    this.on(injectScriptProtocol, async (payload: InjectScriptRequest) => {
+    this.on(injectScriptProtocol, async (payload) => {
       try {
         const results = await browser.scripting.executeScript({
           target: { tabId: payload.tabId },
@@ -264,7 +305,7 @@ export class WSClient extends TypedClient {
     });
 
     // Handle edit-page-content requests
-    this.on(editPageContentProtocol, async (payload: EditPageContentRequest) => {
+    this.on(editPageContentProtocol, async (payload) => {
       try {
         const results = await browser.scripting.executeScript({
           target: { tabId: payload.tabId },
@@ -288,12 +329,65 @@ export class WSClient extends TypedClient {
   }
 
   async initialize(): Promise<void> {
+    console.log(`Initializing WebSocket connection to port ${this.currentPort}...`);
     const result = await this.connect();
     if (result[1]) {
-      console.error("Failed to connect to WebSocket server:", result[1]);
-      throw result[1];
+      console.warn(`Initial connection failed: ${result[1].message}. Auto-reconnect is enabled.`);
+      // Don't throw here - let auto-reconnect handle it
+      return;
     }
-    console.log("WebSocket client connected successfully");
+    console.log(`WebSocket client connected successfully to port ${this.currentPort}`);
+  }
+
+  async reconnect(newPort: number): Promise<void> {
+    if (newPort === this.currentPort) {
+      console.log(`Already connected to port ${newPort}, no reconnection needed`);
+      return;
+    }
+
+    console.log(`Switching from port ${this.currentPort} to port ${newPort}`);
+    
+    // Temporarily disable auto-reconnect to avoid conflicts
+    this.setAutoReconnect(false);
+    
+    // Disconnect from current connection
+    try {
+      this.disconnect();
+    } catch (error) {
+      console.warn("Error during disconnect:", error);
+    }
+
+    // Update port and URL
+    this.currentPort = newPort;
+    this.updateUrl(`ws://localhost:${newPort}`);
+    
+    // Re-enable auto-reconnect
+    this.setAutoReconnect(true);
+
+    // Attempt connection with auto-reconnect handling
+    const result = await this.connect();
+    if (result[1]) {
+      console.warn(`Connection to port ${newPort} failed: ${result[1].message}. Auto-reconnect will handle retries.`);
+      return;
+    }
+    console.log(`WebSocket client connected successfully to port ${newPort}`);
+  }
+
+  getConnectionStatus(): { state: string; port: number; attempts: number; metrics: any } {
+    return {
+      state: this.getConnectionState(),
+      port: this.currentPort,
+      attempts: this.getReconnectAttempts(),
+      metrics: this.getMetrics()
+    };
+  }
+  
+  enableDebugMode(): void {
+    this.setDebugMode(true);
+  }
+  
+  disableDebugMode(): void {
+    this.setDebugMode(false);
   }
 }
 

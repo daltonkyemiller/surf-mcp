@@ -26,6 +26,7 @@ import {
   injectScriptProtocol,
   editPageContentProtocol,
 } from "@surf-mcp/shared/protocols/browser";
+import { isErr } from "@surf-mcp/shared/result";
 
 export const mcpServer = new McpServer({
   name: "surf-mcp",
@@ -33,31 +34,49 @@ export const mcpServer = new McpServer({
 });
 
 // Register browser protocols
-protocolRegistry.register(openTabProtocol);
-protocolRegistry.register(closeTabProtocol);
-protocolRegistry.register(getActiveTabProtocol);
-protocolRegistry.register(getTabsProtocol);
-protocolRegistry.register(getTabContentProtocol);
-protocolRegistry.register(clickElementProtocol);
-protocolRegistry.register(navigateToUrlProtocol);
-protocolRegistry.register(interactElementProtocol);
-protocolRegistry.register(getPageElementsProtocol);
-protocolRegistry.register(injectScriptProtocol);
-protocolRegistry.register(editPageContentProtocol);
+const protocolResults = [
+  protocolRegistry.register(openTabProtocol),
+  protocolRegistry.register(closeTabProtocol),
+  protocolRegistry.register(getActiveTabProtocol),
+  protocolRegistry.register(getTabsProtocol),
+  protocolRegistry.register(getTabContentProtocol),
+  protocolRegistry.register(clickElementProtocol),
+  protocolRegistry.register(navigateToUrlProtocol),
+  protocolRegistry.register(interactElementProtocol),
+  protocolRegistry.register(getPageElementsProtocol),
+  protocolRegistry.register(injectScriptProtocol),
+  protocolRegistry.register(editPageContentProtocol),
+];
+
+for (const result of protocolResults) {
+  if (isErr(result)) {
+    console.error('Failed to register protocol:', result[1].message);
+    process.exit(1);
+  }
+}
 
 const toolRegistry = new ToolRegistry(mcpServer);
 
-toolRegistry.register(openTabTool);
-toolRegistry.register(closeTabTool);
-toolRegistry.register(getActiveTabTool);
-toolRegistry.register(getTabsTool);
-toolRegistry.register(getTabContentTool);
-toolRegistry.register(clickElementTool);
-toolRegistry.register(navigateToUrlTool);
-toolRegistry.register(interactElementTool);
-toolRegistry.register(getPageElementsTool);
-toolRegistry.register(injectScriptTool);
-toolRegistry.register(editPageContentTool);
+const toolResults = [
+  toolRegistry.register(openTabTool),
+  toolRegistry.register(closeTabTool),
+  toolRegistry.register(getActiveTabTool),
+  toolRegistry.register(getTabsTool),
+  toolRegistry.register(getTabContentTool),
+  toolRegistry.register(clickElementTool),
+  toolRegistry.register(navigateToUrlTool),
+  toolRegistry.register(interactElementTool),
+  toolRegistry.register(getPageElementsTool),
+  toolRegistry.register(injectScriptTool),
+  toolRegistry.register(editPageContentTool),
+];
+
+for (const result of toolResults) {
+  if (isErr(result)) {
+    console.error('Failed to register tool:', result[1].message);
+    process.exit(1);
+  }
+}
 
 toolRegistry.registerAllWithServer();
 

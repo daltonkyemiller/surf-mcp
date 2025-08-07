@@ -47,6 +47,16 @@ export class TypedServer {
   }
 
   private async handleMessage(ws: any, data: string | Buffer): Promise<void> {
+    // Handle heartbeat messages
+    if (data === 'ping') {
+      try {
+        ws.send('pong');
+      } catch (error) {
+        console.error('Failed to send pong:', error);
+      }
+      return;
+    }
+
     const [parsed, parseError] = safeJSONParse(data);
     if (parseError) {
       console.error("Failed to parse message:", parseError);
@@ -112,9 +122,9 @@ export class TypedServer {
   handle<TRequest, TResponse>(
     protocol: ProtocolDefinition<TRequest, TResponse>,
     handler: (payload: TRequest, requestId: string) => Promise<TResponse>
-  ): void {
+  ): Result<void, Error> {
     if (this.handlers.has(protocol.type)) {
-      throw new Error(`Handler for type '${protocol.type}' is already registered`);
+      return err(new Error(`Handler for type '${protocol.type}' is already registered`));
     }
 
     this.handlers.set(protocol.type, async (payload: any, requestId: string) => {
@@ -134,6 +144,7 @@ export class TypedServer {
 
       return responseValidation.data;
     });
+    return ok(undefined);
   }
 
   // Method to broadcast to all connections (useful for notifications)
