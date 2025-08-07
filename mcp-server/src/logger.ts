@@ -1,7 +1,11 @@
 import winston from "winston";
 import { join } from "node:path";
 
-const LOGS_PATH = Bun.env.LOGS_PATH || "./logs";
+function getLogPath() {
+  return join(import.meta.dir, "../", Bun.env.LOGS_PATH || "./logs");
+}
+
+const LOGS_PATH = getLogPath();
 
 const formatter = winston.format.combine(
   winston.format.errors({ stack: true }),
